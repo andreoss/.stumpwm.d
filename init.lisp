@@ -1,0 +1,340 @@
+(require :bt-semaphore)
+(require :external-program)
+(require :swank)
+(in-package :stumpwm)
+
+(defvar *swank-running* nil)
+(defvar *swank-port* 4005)
+(defvar *mode-line-enabled* nil)
+(defvar *group-names* '("1" "2" "3" "4" "5" "6" "7"))
+
+(run-shell-command "wmname LG3D")
+(run-shell-command "~/.fehbg")
+
+(set-prefix-key (kbd "C-t"))
+
+
+(let ((groups (sort-groups (current-screen))))
+  (dotimes (n (length *group-names*))
+    (if-let ((group (nth n groups)) (name (nth n *group-names*)))
+      (%grename name group)
+      (gnewbg name))))
+
+(defcommand swank-off () ()
+  "Turn off swank."
+  (if *swank-running*
+      (progn
+        (swank:stop-server *swank-port*)
+        (echo-string
+         (current-screen)
+         "Stopping swank.")
+        (setf *swank-running* nil))))
+
+(defcommand swank-on () ()
+  "Turn on swank."
+  (unless *swank-running*
+    (progn
+      (swank-loader:init)
+      (swank:create-server
+       :port *swank-port*
+       :style swank:*communication-style*
+       :dont-close t)
+      (message
+       "Starting swank. M-x slime-connect RET RET, then (in-package stumpwm).")
+      (setf *swank-running* t))))
+
+(defcommand pull-from-everywhere (&optional (fmt *window-format*)) (:rest)
+  ""
+  (let ((pulled-window (select-window-from-menu
+                        (all-windows)
+                        fmt)))
+    (when pulled-window
+      (move-window-to-group pulled-window (current-group))
+      (pull-window pulled-window))))
+
+(defcommand windowlist-everywhere (&optional (fmt *window-format*)) ()
+  "All windows."
+  (if-let ((window-list (all-windows)))
+    (if-let ((window (select-window-from-menu window-list fmt)))
+      (let ((group (window-group window)))
+        (progn
+          (switch-to-group group)
+          (group-focus-window group window)))
+      (throw 'error :abort))
+    (message "No Managed Windows")))
+
+(defcommand swank () ()
+  "Toggle the swank server on/off"
+  (if *swank-running* (swank-off) (swank-on)))
+
+(setf stumpwm:*top-level-error-action* :abort)
+(set-module-dir
+ (pathname-as-directory (concat (getenv "HOME") "/.stumpwm.d/modules")))
+
+(set-transient-gravity :left)
+(setf *mode-line-position* :top)
+(setf *mode-line-background-color* "#454545")
+(setf *mode-line-foreground-color* "#fefefe")
+(setf *mode-line-border-color* "#111111")
+
+
+(defcommand report () ()
+  (message
+   (format nil "~{~A~^| ~}"
+           (list
+            (stumpwm:run-shell-command "uptime | sed 's/.*:[ ]*//'" t)
+            (stumpwm:run-shell-command "TZ=America/New_York date" t)
+            (stumpwm:run-shell-command "TZ=Europe/Moscow date +'                %X %Z'" t)
+            (stumpwm:run-shell-command "acpi" t)))))
+
+
+(defcommand toggle-modeline () ()
+  "Toggle mode-line"
+  (progn
+    (toggle-mode-line (current-screen) (current-head))
+    (redisplay)))
+
+(defcommand lock () ()
+  (stumpwm:run-shell-command "physlock")
+  )
+(setf *time-format-string-default* "%a %b %e %Y %l:%M%P")
+(define-key *top-map* (kbd "C-M-Delete") "lock")
+(define-key *top-map* (kbd "M-/") "windowlist-everywhere")
+(define-key *top-map* (kbd "M-TAB") "fnext")
+(define-key *top-map* (kbd "M-SPC") "shell-exec")
+(define-key *top-map* (kbd "M-ISO_Left_Tab") "prev")
+(define-key *top-map* (kbd "C-M-Left") "gprev")
+(define-key *top-map* (kbd "C-M-Right") "gnext")
+(define-key *top-map* (kbd "C-M-S-Left") "gprev-with-window")
+(define-key *top-map* (kbd "C-M-S-Right") "gnext-with-window")
+(define-key *top-map* (kbd "XF86AudioRaiseVolume") "raise-volume")
+(define-key *top-map* (kbd "XF86AudioLowerVolume") "lower-volume")
+(define-key *top-map* (kbd "C-M-S-Right") "gnext-with-window")
+
+(defcommand raise-volume () ()
+    (stumpwm:run-shell-command "emacsclient -e '(emms-volume-raise)'"))
+(defcommand lower-volume () ()
+    (stumpwm:run-shell-command "emacsclient -e '(emms-volume-lower)'"))
+
+(define-key *root-map* (kbd ":") "colon")
+(define-key *root-map* (kbd "[") "exchange-direction left")
+(define-key *root-map* (kbd "]") "exchange-direction right")
+(define-key *root-map* (kbd "/") "windowlist-everywhere")
+(define-key *root-map* (kbd "a") "report")
+(define-key *root-map* (kbd "b") "report")
+(define-key *root-map* (kbd "C-/") "pull-from-everywhere")
+(define-key *root-map* (kbd "C-c") "exec emacsclient -c -e '(shell)'")
+(define-key *root-map* (kbd "C-o") "other")
+(define-key *root-map* (kbd "C-r") "remove")
+(define-key *root-map* (kbd "C-s") "hsplit")
+(define-key *root-map* (kbd "C-t") "send-raw-key")
+(define-key *root-map* (kbd "C-v") "vsplit")
+(define-key *root-map* (kbd "m") "mark")
+(define-key *root-map* (kbd "M") "pull-marked")
+(set-fg-color "#111111")
+(set-bg-color "#ffffea")
+(set-border-color "#131313")
+(set-focus-color "#737373")
+(set-unfocus-color "#131313")
+(set-font "-*-tamzen-medium-*-*-*-14-*-*-*-*-*-*-*")
+(setf *message-window-gravity*             :top-left
+      *input-window-gravity*               :top-left
+      *window-border-style*                :tight
+      *message-window-padding*             3
+      *maxsize-border-width*               3
+      *transient-border-width*             3
+      *normal-border-width*                3
+      stumpwm::*float-window-border*       2
+      stumpwm::*float-window-title-height* 5)
+
+(defun window-group-name (window)
+  "Group name of a window."
+  (group-name (window-group window)))
+(push '(#\q window-group-name) *window-formatters*)
+(setf *window-format* "%q - %10m%n%s%c - %20t")
+
+(defun group-size (group)
+  "Amount of windows in group."
+  (length  (group-windows group)))
+
+(defun group-resume (group)
+  "Amount of windows in group."
+  (format nil "~{~A~^, ~}" (mapcar #'window-class (group-windows group))))
+
+(push '(#\q group-size) *group-formatters*)
+(push '(#\r group-resume) *group-formatters*)
+
+(setf *group-format*  "%n %s %t - %q (%20r)")
+(setf *time-format-string-default* "%a %b %e %Y %l:%M %P")
+(defvar *winner-map* (make-sparse-keymap))
+(define-key *root-map* (kbd "c") '*winner-map*)
+(define-key *winner-map* (kbd "c") "dump-desktop")
+(define-key *winner-map* (kbd "r") "restore-from-file")
+
+(define-key *winner-map* (kbd "Left") "winner-undo")
+(define-key *winner-map* (kbd "Right") "winner-redo")
+
+(setf *mouse-focus-policy* :sloppy)
+
+(load-module "urgentwindows")
+(add-hook *urgent-window-hook* 'really-raise-window)
+
+(define-remapped-keys
+    '(
+      ("(Firefox|Chrome)" ("C-a"   . "C-t"))
+      ))
+
+(defvar *desktop-history* '())
+
+(defcommand dump () ()
+  "Dump current desktop."
+  (message (format nil "Dumped ~a" (length *desktop-history*)))
+  (let ((current (dump-desktop))
+        (last (first *desktop-history*)))
+    (if (not (equalp current last))
+        (push (dump-desktop) *desktop-history*))))
+
+(defcommand restore () ()
+  "Dump current desktop."
+  (progn
+    (message (format nil "Restored ~a" (length *desktop-history*)))
+    (restore-desktop (pop *desktop-history*))))
+
+(defvar *default-commands*
+  '(stumpwm:only
+    stumpwm:pull-from-windowlist
+    stumpwm:pull-hidden-next
+    stumpwm:pull-hidden-other
+    stumpwm:pull-hidden-previous
+    stumpwm:pull-marked
+    stumpwm:pull-window-by-number
+    stumpwm:next
+    stumpwm:next-in-frame
+    stumpwm:next-urgent
+    stumpwm:prev
+    stumpwm:prev-in-frame
+    stumpwm:select-window
+    stumpwm:select-from-menu
+    stumpwm:select-window-by-name
+    stumpwm:select-window-by-number
+    stumpwm::pull
+    stumpwm::remove
+    stumpwm:iresize
+    stumpwm:vsplit
+    stumpwm:hsplit
+    stumpwm:move-window
+    stumpwm:move-windows-to-group
+    stumpwm:move-window-to-group
+    ;;stumpwm:balance-frames
+    stumpwm::delete
+    stumpwm::kill
+    stumpwm:fullscreen))
+
+(add-hook *post-command-hook*
+          (lambda (command)
+            (when (member command *default-commands*)
+              (dump))))
+
+(define-key *root-map* (kbd "d") "dump")
+(define-key *root-map* (kbd "u") "restore")
+(define-key *root-map* (kbd "C-g") "only")
+
+(defun shift-windows-forward (frames window)
+  (when frames
+    (let ((frame (car frames)))
+      (shift-windows-forward (cdr frames)
+                             (frame-window frame))
+      (when window
+        (pull-window window frame)))))
+
+(defcommand rotate-windows () ()
+  "Rotate windows"
+  (let* ((frames (group-frames (current-group)))
+         (window (frame-window (car (last frames)))))
+    (shift-windows-forward frames window)))
+
+
+(define-key *root-map* (kbd "C-SPC") "rotate-windows")
+(define-key *groups-map* (kbd "/") "grouplist")
+(define-key *groups-map* (kbd "w") "groups")
+
+(defun shell-command (command) "Run a shell command and display output to screen.
+    This must be used in a functional side-effects-free style! If a program does not
+    exit of its own accord, Stumpwm might hang!"
+  (echo-string (current-screen) (run-shell-command command t)))
+
+(define-stumpwm-type :shell (input prompt)
+  (let ((*input-history* *input-shell-history*))
+    (unwind-protect
+         (or (argument-pop-rest input)
+             (completing-read (current-screen)
+                              (if (symbolp prompt) (funcall prompt) prompt)
+                              'complete-program))
+      (setf *input-shell-history* *input-history*))))
+
+(defun ai/prompt (&rest args)
+  ""
+  (format nil "~a~&* " (run-shell-command "xclip -o" t)))
+
+(defcommand shell-exec (command) ((:shell ai/prompt))
+  (if (and command (not (equal command "")))
+      (let* ((proc (external-program:start "/bin/sh" (list "-c" command) :output :stream))
+             (pid (external-program:process-id proc)))
+        (message (format nil "`~a` started with pid ~a" command (external-program:process-id proc)))
+        (bt:make-thread
+         (lambda ()
+           (let ((output (external-program:process-output-stream proc)))
+             (with-open-stream (stdout output)
+               (let ((lines
+                       (loop
+                         repeat 50
+                         for line = (read-line stdout nil nil)
+                         while line
+                         collect line
+                         finally (close stdout))))
+                 (message
+                  (format nil
+                          "`~a` (~a) finished with ~a~&~{|~A~^~&~}"
+                          command
+                          pid
+                          (sb-ext:process-exit-code (sb-ext:process-wait proc))
+                          lines
+                            ))))))))))
+
+
+(define-key *root-map* (kbd "!") "shell-exec")
+(defcommand toggle-mouse () ()
+  (banish)
+  (run-shell-command "~/.scripts/toggle-mouse"))
+
+(define-key *root-map* (kbd "C-m") "toggle-mouse")
+
+(defun focus-group-report (current last)
+  (bt:make-thread
+   (lambda ()
+     (sleep 0.3)
+     (echo-windows))))
+
+(add-hook *focus-group-hook* 'focus-group-report)
+
+(defun focus-window-report (current last)
+  (unless (equal current last)
+    (let ((frame (window-frame current)))
+      (warp-pointer (group-screen (window-group current))
+                    (+ (frame-x frame) (/ (frame-width frame) 2))
+                    (+ (frame-y frame) (/ (frame-height frame) 2))))))
+
+(add-hook *focus-window-hook* 'focus-window-report)
+
+(defvar *message-semaphore* (bt:make-semaphore :count 1))
+(defun message-only (&rest xs)
+  (bt:wait-on-semaphore *message-semaphore*)
+  (sleep .1)
+  (apply 'message xs)
+  (sleep 1)
+  (bt:signal-semaphore *message-semaphore*))
+
+(defun message-async (&rest xs)
+  (bt:make-thread
+   (lambda ()
+     (apply 'message-only xs))))
