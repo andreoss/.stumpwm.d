@@ -1,0 +1,1 @@
+# Stumpwm Configuration
