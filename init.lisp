@@ -5,6 +5,7 @@
 (require :local-time)
 (local-time:reread-timezone-repository)
 (in-package :stumpwm)
+(defvar *inner* (sb-ext:posix-getenv "STUMPWM_INNER"))
 (defvar *swank-running* nil)
 (defvar *swank-port* 4005)
 (defvar *group-names* '("1" "2" "3" "4" "5" "6" "7"))
@@ -14,6 +15,8 @@
 (set-font "-*-clean-*-*-*-*-12-*-*-*-*-*-*-*")
 (set-bg-color "#b9bdc5")
 (set-fg-color "#222222")
+(if *inner*
+    (set-bg-color "#662222"))
 (set-border-color "#8A8A8A")
 (set-unfocus-color "#b9b8b8")
 (set-focus-color "#1818EA")
@@ -28,7 +31,8 @@
 (setf *mode-line-foreground-color* (format nil "#~x" (screen-fg-color (current-screen))))
 (setf *mode-line-position* :top)
 (setf *mode-line-timeout* 0.1)
-(set-prefix-key (kbd "C-t"))
+
+(set-prefix-key (if *inner* (kbd "C-y") (kbd "C-t")))
 (set-module-dir
  (pathname-as-directory (concat (getenv "HOME") "/.stumpwm.d/modules")))
 (set-transient-gravity :left)
