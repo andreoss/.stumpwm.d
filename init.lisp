@@ -55,6 +55,7 @@
  )
 (setf *group-format*  "^B%n°^b %s %q (%20r)")
 (setf *mouse-focus-policy* :sloppy)
+(setf *banish-pointer-to* :frame)
 (setf *screen-mode-line-format* (list "^B%n°^b %v " " ^> " '(:eval (root-name))))
 (setf *time-format-string-default* "%a %b %e %Y %l:%M %P")
 (setf *window-format* "%n^(:fg \"#9a9a9a\")%s%m^n %c - %10t")
@@ -381,6 +382,10 @@
   (0 t t :class "Emacs")
   (1 t t :class "Firefox" :create t))
 
+(defun move-pointer (curr prev)
+  (banish-pointer))
+
+(add-hook *focus-window-hook* 'move-pointer)
 (add-hook *root-click-hook* 'root-click-handle)
 (add-hook *new-window-hook* 'new-window-handle)
 (add-hook *post-command-hook*
