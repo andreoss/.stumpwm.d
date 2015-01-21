@@ -89,6 +89,7 @@
 (define-key *root-map* (kbd "u") "restore")
 (define-key *root-map* (kbd "/") "windowlist-everywhere")
 (define-key *root-map* (kbd "*") "flatten-floats")
+(define-key *root-map* (kbd "=") "balance-frame")
 (define-key *top-map* (kbd "C-M-Delete") "lock")
 (define-key *top-map* (kbd "C-M-Left") "gprev")
 (define-key *top-map* (kbd "C-M-Right") "gnext")
