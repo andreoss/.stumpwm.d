@@ -13,13 +13,14 @@
 (defvar *winner-map* (make-sparse-keymap))
 (defvar *desktop-history* '())
 (set-font "-*-clean-*-*-*-*-12-*-*-*-*-*-*-*")
-(set-bg-color "#b9bdc5")
-(set-fg-color "#222222")
+
+(set-bg-color "#121212")
+(set-fg-color "#ffffea")
 (if *inner*
-    (set-bg-color "#662222"))
-(set-border-color "#8A8A8A")
-(set-unfocus-color "#b9b8b8")
-(set-focus-color "#1818EA")
+    (set-bg-color "#8a1212"))
+(set-border-color "#fffAfA")
+(set-unfocus-color "#B8B8B8")
+(set-focus-color "#222444")
 (setq *colors*
       '("#282828" "#AE1818"
         "#18A038" "#EAEA14"
