@@ -1,2 +1,5 @@
 #!/bin/sh
-exec sbcl --load ~/.stumpwm.d/start.lisp
+while :
+do
+   sbcl --load ~/.stumpwm.d/start.lisp
+done
