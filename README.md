@@ -13,6 +13,6 @@ sbcl --non-interactive --eval "(ql:quickload :stumpwm)"
 ## Installation
 
 ```shell
-    git clone https://github.com/andreoss/.stumpwm.d ~/.stumpwm.d
-    echo "exec ~/.stumpwm.d/start.sh" > ~/.xsession
+git clone https://github.com/andreoss/.stumpwm.d ~/.stumpwm.d
+echo "exec ~/.stumpwm.d/start.sh" > ~/.xsession
 ```
