@@ -51,6 +51,22 @@
 (setf *mode-line-border-color*     (format nil "#~x" (screen-border-color (current-screen))))
 (setf *mode-line-position* :bottom)
 (setf *mode-line-timeout* 0.1)
+(setf *screen-mode-line-format*
+      (list "^B%n°^b %v " " ^> "
+            '(:eval (root-name)))
+      )
+
+(defun root-name ()
+  (let* ((screen (current-screen))
+         (selwin (screen-focus-window (current-screen)))
+         (root (screen-root screen)))
+    (utf8-to-string
+     (xlib:get-property root
+                        :wm_name
+                        :result-type '(vector (unsigned-byte 8))))))
+
+(defun window-pid (window)
+  (car (window-property window '_NET_WM_PID)))
 (let ((groups (sort-groups (current-screen))))
   (dotimes (n (length *group-names*))
     (if-let ((group (nth n groups)) (name (nth n *group-names*)))
