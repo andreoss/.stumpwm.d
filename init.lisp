@@ -372,3 +372,45 @@
   (bt:make-thread
    (lambda ()
      (apply 'message-only xs))))
+
+
+(defun fmt-window-status (window)
+  (let ((group (window-group window)))
+    (cond ((eq window (group-current-window group))
+           #\✓)
+          ((and (typep (second (group-windows group)) 'window)
+                (eq window (second (group-windows group))))
+           #\×)
+          (t #\ ))))
+
+(defun fmt-window-marked (window)
+  (if (window-marked window)
+      #\✓
+      #\Space))
+
+(turn-on-mode-line-timer)
+(toggle-modeline)
+
+
+
+(clear-window-placement-rules)
+(define-frame-preference "2"
+  (0 t t :class "Chromium")
+  (1 t t :class "Wfica")
+  )
+
+(define-frame-preference "1"
+  (0 t t :class "Emacs")
+  (1 t t :class "Firefox" :create t)
+  )
+
+(add-hook *root-click-hook* 'root-click-handle)
+(defun root-click-handle (screen button x y)
+  (message "root"))
+
+(add-hook *new-window-hook* 'new-window-handle)
+(defun new-window-handle (win)
+  (if (equal (window-class win) "mpv")
+      (let ((screen (window-screen win))
+            (group (window-group win)))
+        (float-window win group))))
