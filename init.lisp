@@ -359,6 +359,50 @@
                     (+ (frame-y frame) (/ (frame-height frame) 2))))))
 
 (add-hook *focus-window-hook* 'focus-window-report)
+(defun shell-command (command)
+  "Run a shell command and display output to screen.
+    This must be used in a functional side-effects-free style! If a program does not
+    exit of its own accord, Stumpwm might hang!"
+  (echo-string (current-screen) (run-shell-command command t)))
+
+(define-stumpwm-type :shell (input prompt)
+  (let ((*input-history* *input-shell-history*))
+    (unwind-protect
+         (or (argument-pop-rest input)
+             (completing-read (current-screen)
+                              (if (symbolp prompt) (funcall prompt) prompt)
+                              'complete-program))
+      (setf *input-shell-history* *input-history*))))
+
+(defun ai/prompt (&rest args)
+  "Prompt for shell commands."
+  (format nil "~a~&* " (run-shell-command "xclip -o | head"  t)))
+
+(defcommand shell-exec (command) ((:shell ai/prompt))
+  (if (and command (not (equal command "")))
+      (let* ((proc (external-program:start "/bin/sh" (list "-c" command) :output :stream))
+             (pid (external-program:process-id proc)))
+        (message (format nil "`~a` started with pid ~a" command (external-program:process-id proc)))
+        (bt:make-thread
+         (lambda ()
+           (let ((output (external-program:process-output-stream proc)))
+             (with-open-stream (stdout output)
+               (let ((lines
+                       (loop
+                         repeat 50
+                         for line = (read-line stdout nil nil)
+                         while line
+                         collect line
+                         finally (close stdout))))
+                 (message
+                  (format nil
+                          "`~a` (~a) finished with ~a~&~{|~A~^~&~}"
+                          command
+                          pid
+                          (sb-ext:process-exit-code (sb-ext:process-wait proc))
+                          lines
+                          ))))))))))
+
 
 (defvar *message-semaphore* (bt:make-semaphore :count 1))
 (defun message-only (&rest xs)
