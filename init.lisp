@@ -178,27 +178,13 @@
 (define-key *root-map* (kbd "C-v") "vsplit")
 (define-key *root-map* (kbd "m") "mark")
 (define-key *root-map* (kbd "M") "pull-marked")
-(set-fg-color "#111111")
-(set-bg-color "#ffffea")
-(set-border-color "#131313")
-(set-focus-color "#737373")
-(set-unfocus-color "#131313")
-(set-font "-*-tamzen-medium-*-*-*-14-*-*-*-*-*-*-*")
-(setf *message-window-gravity*             :top-left
-      *input-window-gravity*               :top-left
-      *window-border-style*                :tight
-      *message-window-padding*             3
-      *maxsize-border-width*               3
-      *transient-border-width*             3
-      *normal-border-width*                3
-      stumpwm::*float-window-border*       2
-      stumpwm::*float-window-title-height* 5)
 
 (defun window-group-name (window)
   "Group name of a window."
   (group-name (window-group window)))
 (push '(#\q window-group-name) *window-formatters*)
-(setf *window-format* "%q - %10m%n%s%c - %20t")
+(push '(#\P window-pid) *window-formatters*)
+(setf *window-format* "%n^(:fg \"#9a9a9a\")%s%m^n %c - %10t")
 
 (defun group-size (group)
   "Amount of windows in group."
@@ -211,13 +197,12 @@
 (push '(#\q group-size) *group-formatters*)
 (push '(#\r group-resume) *group-formatters*)
 
-(setf *group-format*  "%n %s %t - %q (%20r)")
+(setf *group-format*  "^B%n°^b %s %q (%20r)")
 (setf *time-format-string-default* "%a %b %e %Y %l:%M %P")
 (defvar *winner-map* (make-sparse-keymap))
-(define-key *root-map* (kbd "c") '*winner-map*)
+(define-key *root-map*   (kbd "c") '*winner-map*)
 (define-key *winner-map* (kbd "c") "dump-desktop")
 (define-key *winner-map* (kbd "r") "restore-from-file")
-
 (define-key *winner-map* (kbd "Left") "winner-undo")
 (define-key *winner-map* (kbd "Right") "winner-redo")
 
