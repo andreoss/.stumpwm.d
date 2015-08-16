@@ -475,6 +475,14 @@
                           ))))))))))
 
 
+(define-key *root-map* (kbd "!") "shell-exec")
+(defcommand toggle-mouse () ()
+  (banish)
+  (run-shell-command "~/.scripts/toggle-mouse"))
+
+(define-key *root-map* (kbd "C-m") "toggle-mouse")
+
+(add-hook *focus-group-hook* 'focus-group-report)
 (defvar *message-semaphore* (bt:make-semaphore :count 1))
 (defun message-only (&rest xs)
   (bt:wait-on-semaphore *message-semaphore*)
