@@ -351,12 +351,6 @@
 
 (add-hook *focus-group-hook* 'focus-group-report)
 
-(defun focus-window-report (current last)
-  (unless (equal current last)
-    (let ((frame (window-frame current)))
-      (warp-pointer (group-screen (window-group current))
-                    (+ (frame-x frame) (/ (frame-width frame) 2))
-                    (+ (frame-y frame) (/ (frame-height frame) 2))))))
 (defvar *desktop-history* '())
 
 (defcommand dump () ()
