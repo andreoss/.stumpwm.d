@@ -117,19 +117,13 @@
     (message "No Managed Windows")))
 
 (defcommand swank () ()
-  "Toggle the swank server on/off"
+  "Toggle the swank server on/off. "
   (if *swank-running* (swank-off) (swank-on)))
 
-(setf stumpwm:*top-level-error-action* :abort)
 (set-module-dir
  (pathname-as-directory (concat (getenv "HOME") "/.stumpwm.d/modules")))
 
 (set-transient-gravity :left)
-(setf *mode-line-position* :top)
-(setf *mode-line-background-color* "#454545")
-(setf *mode-line-foreground-color* "#fefefe")
-(setf *mode-line-border-color* "#111111")
-
 
 (defcommand report () ()
   (message
