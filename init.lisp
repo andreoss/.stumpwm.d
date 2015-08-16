@@ -214,7 +214,9 @@
 (define-remapped-keys
     '(
       ("(Firefox|Chrome)" ("C-a"   . "C-t"))
-      ))
+      ("(Wfica)"          ("M-ESC" . "M-TAB"))
+      )
+  )
 
 (defvar *desktop-history* '())
 
