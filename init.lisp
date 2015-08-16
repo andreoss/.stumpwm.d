@@ -136,14 +136,13 @@
 
 
 (defcommand toggle-modeline () ()
-  "Toggle mode-line"
+  "Toggle mode-line. "
   (progn
     (toggle-mode-line (current-screen) (current-head))
     (redisplay)))
 
 (defcommand lock () ()
-  (stumpwm:run-shell-command "physlock")
-  )
+  (stumpwm:run-shell-command "physlock"))
 (setf *time-format-string-default* "%a %b %e %Y %l:%M%P")
 (define-key *top-map* (kbd "C-M-Delete") "lock")
 (define-key *top-map* (kbd "M-/") "windowlist-everywhere")
@@ -159,9 +158,9 @@
 (define-key *top-map* (kbd "C-M-S-Right") "gnext-with-window")
 
 (defcommand raise-volume () ()
-    (stumpwm:run-shell-command "emacsclient -e '(emms-volume-raise)'"))
+  (stumpwm:run-shell-command "emacsclient -e '(emms-volume-raise)'"))
 (defcommand lower-volume () ()
-    (stumpwm:run-shell-command "emacsclient -e '(emms-volume-lower)'"))
+  (stumpwm:run-shell-command "emacsclient -e '(emms-volume-lower)'"))
 
 (define-key *root-map* (kbd ":") "colon")
 (define-key *root-map* (kbd "[") "exchange-direction left")
