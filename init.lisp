@@ -290,11 +290,8 @@
 (define-key *groups-map* (kbd "/") "grouplist")
 (define-key *groups-map* (kbd "w") "groups")
 
-(define-key *root-map* (kbd "C-SPC") "rotate-windows")
-(define-key *groups-map* (kbd "/") "grouplist")
-(define-key *groups-map* (kbd "w") "groups")
-
-(defun shell-command (command) "Run a shell command and display output to screen.
+(defun shell-command (command)
+  "Run a shell command and display output to screen.
     This must be used in a functional side-effects-free style! If a program does not
     exit of its own accord, Stumpwm might hang!"
   (echo-string (current-screen) (run-shell-command command t)))
@@ -309,8 +306,8 @@
       (setf *input-shell-history* *input-history*))))
 
 (defun ai/prompt (&rest args)
-  ""
-  (format nil "~a~&* " (run-shell-command "xclip -o" t)))
+  "Prompt for shell commands."
+  (format nil "~a~&* " (run-shell-command "xclip -o | head"  t)))
 
 (defcommand shell-exec (command) ((:shell ai/prompt))
   (if (and command (not (equal command "")))
@@ -335,7 +332,170 @@
                           pid
                           (sb-ext:process-exit-code (sb-ext:process-wait proc))
                           lines
-                            ))))))))))
+                          ))
+                 )
+               )
+             )
+           )
+         )
+        )
+      ))
+
+
+(define-key *root-map* (kbd "!") "shell-exec")
+(defcommand toggle-mouse () ()
+  (banish)
+  (run-shell-command "~/.scripts/toggle-mouse"))
+
+(define-key *root-map* (kbd "C-m") "toggle-mouse")
+
+(defun group-size (group)
+  "Amount of windows in group."
+  (length  (group-windows group)))
+
+(defun group-resume (group)
+  "Amount of windows in group."
+  (format nil "~{~A~^, ~}" (mapcar #'window-class (group-windows group))))
+
+(push '(#\q group-size) *group-formatters*)
+(push '(#\r group-resume) *group-formatters*)
+
+(setf *group-format*  "^B%n°^b %s %q (%20r)")
+(setf *time-format-string-default* "%a %b %e %Y %l:%M %P")
+(defvar *winner-map* (make-sparse-keymap))
+(define-key *root-map*   (kbd "c") '*winner-map*)
+(define-key *winner-map* (kbd "c") "dump-desktop")
+(define-key *winner-map* (kbd "r") "restore-from-file")
+(define-key *winner-map* (kbd "Left") "winner-undo")
+(define-key *winner-map* (kbd "Right") "winner-redo")
+
+(setf *mouse-focus-policy* :sloppy)
+
+(load-module "urgentwindows")
+(add-hook *urgent-window-hook* 'really-raise-window)
+
+(define-remapped-keys
+    '(
+      ("(Firefox|Chrome)" ("C-a"   . "C-t"))
+      ("(Wfica)"          ("M-ESC" . "M-TAB"))
+      )
+  )
+
+(defvar *desktop-history* '())
+
+(defcommand dump () ()
+  "Dump current desktop."
+  (message (format nil "Dumped ~a" (length *desktop-history*)))
+  (let ((current (dump-desktop))
+        (last (first *desktop-history*)))
+    (if (not (equalp current last))
+        (push (dump-desktop) *desktop-history*))))
+
+(defcommand restore () ()
+  "Dump current desktop."
+  (progn
+    (message (format nil "Restored ~a" (length *desktop-history*)))
+    (restore-desktop (pop *desktop-history*))))
+
+(defvar *default-commands*
+  '(stumpwm:only
+    stumpwm:pull-from-windowlist
+    stumpwm:pull-hidden-next
+    stumpwm:pull-hidden-other
+    stumpwm:pull-hidden-previous
+    stumpwm:pull-marked
+    stumpwm:pull-window-by-number
+    stumpwm:next
+    stumpwm:next-in-frame
+    stumpwm:next-urgent
+    stumpwm:prev
+    stumpwm:prev-in-frame
+    stumpwm:select-window
+    stumpwm:select-from-menu
+    stumpwm:select-window-by-name
+    stumpwm:select-window-by-number
+    stumpwm::pull
+    stumpwm::remove
+    stumpwm:iresize
+    stumpwm:vsplit
+    stumpwm:hsplit
+    stumpwm:move-window
+    stumpwm:move-windows-to-group
+    stumpwm:move-window-to-group
+    stumpwm::delete
+    stumpwm::kill
+    stumpwm:fullscreen))
+
+(add-hook *post-command-hook*
+          (lambda (command)
+            (when (member command *default-commands*)
+              (dump))))
+
+(define-key *root-map* (kbd "d") "dump")
+(define-key *root-map* (kbd "u") "restore")
+(define-key *root-map* (kbd "C-g") "only")
+
+(defun shift-windows-forward (frames window)
+  (when frames
+    (let ((frame (car frames)))
+      (shift-windows-forward (cdr frames)
+                             (frame-window frame))
+      (when window
+        (pull-window window frame)))))
+
+(defcommand rotate-windows () ()
+  "Rotate windows"
+  (let* ((frames (group-frames (current-group)))
+         (window (frame-window (car (last frames)))))
+    (shift-windows-forward frames window)))
+
+(define-key *root-map*   (kbd "C-SPC") "rotate-windows")
+(define-key *groups-map* (kbd "/") "grouplist")
+(define-key *groups-map* (kbd "w") "groups")
+
+(defun shell-command (command)
+  "Run a shell command and display output to screen.
+    This must be used in a functional side-effects-free style! If a program does not
+    exit of its own accord, Stumpwm might hang!"
+  (echo-string (current-screen) (run-shell-command command t)))
+
+(define-stumpwm-type :shell (input prompt)
+  (let ((*input-history* *input-shell-history*))
+    (unwind-protect
+         (or (argument-pop-rest input)
+             (completing-read (current-screen)
+                              (if (symbolp prompt) (funcall prompt) prompt)
+                              'complete-program))
+      (setf *input-shell-history* *input-history*))))
+
+(defun ai/prompt (&rest args)
+  "Prompt for shell commands."
+  (format nil "~a~&* " (run-shell-command "xclip -o | head"  t)))
+
+(defcommand shell-exec (command) ((:shell ai/prompt))
+  (if (and command (not (equal command "")))
+      (let* ((proc (external-program:start "/bin/sh" (list "-c" command) :output :stream))
+             (pid (external-program:process-id proc)))
+        (message (format nil "`~a` started with pid ~a" command (external-program:process-id proc)))
+        (bt:make-thread
+         (lambda ()
+           (let ((output (external-program:process-output-stream proc)))
+             (with-open-stream (stdout output)
+               (let ((lines
+                       (loop
+                         repeat 50
+                         for line = (read-line stdout nil nil)
+                         while line
+                         collect line
+                         finally (close stdout))))
+                 (message
+                  (format nil
+                          "`~a` (~a) finished with ~a~&~{|~A~^~&~}"
+                          command
+                          pid
+                          (sb-ext:process-exit-code (sb-ext:process-wait proc))
+                          lines
+                          ))))))))))
 
 
 (define-key *root-map* (kbd "!") "shell-exec")
