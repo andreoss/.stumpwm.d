@@ -29,6 +29,33 @@
 (set-prefix-key (kbd "C-t"))
 
 
+(run-shell-command "wmname LG3D")
+(run-shell-command "pkill dst ; dst")
+
+(setf
+ *float-window-border*       1
+ *float-window-title-height* 1
+ *hidden-window-color*                "^(:fg \"#887888\")"
+ *input-window-gravity*               :center
+ *top-level-error-action*             :abort:
+ *maxsize-border-width*               1
+ *message-window-padding*             1
+ *mode-line-highlight-template*       "^(:bg \"#9a3232\")^(:fg \"#887888\")~A^n"
+ *mode-line-pad-x*                    20
+ *mode-line-pad-y*                    1
+ *new-window-preferred-frame*         '(:empty :unfocused :last)
+ *normal-border-width*                1
+ *transient-border-width*             1
+ *window-border-style*                :tight
+ *message-window-gravity*             :center
+ )
+
+(setf *mode-line-border-width* 1)
+(setf *mode-line-background-color* (format nil "#~x" (screen-bg-color (current-screen))))
+(setf *mode-line-foreground-color* (format nil "#~x" (screen-fg-color (current-screen))))
+(setf *mode-line-border-color*     (format nil "#~x" (screen-border-color (current-screen))))
+(setf *mode-line-position* :bottom)
+(setf *mode-line-timeout* 0.1)
 (let ((groups (sort-groups (current-screen))))
   (dotimes (n (length *group-names*))
     (if-let ((group (nth n groups)) (name (nth n *group-names*)))
