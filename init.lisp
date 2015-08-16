@@ -5,11 +5,7 @@
 
 (defvar *swank-running* nil)
 (defvar *swank-port* 4005)
-(defvar *mode-line-enabled* nil)
 (defvar *group-names* '("1" "2" "3" "4" "5" "6" "7"))
-
-(run-shell-command "wmname LG3D")
-(run-shell-command "~/.fehbg")
 
 (setq *colors*
       '("#181818"
@@ -27,7 +23,6 @@
 (set-focus-color "#EAEAEA")
 (set-unfocus-color "#181818")
 (set-prefix-key (kbd "C-t"))
-
 
 (run-shell-command "wmname LG3D")
 (run-shell-command "pkill dst ; dst")
