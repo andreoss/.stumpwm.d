@@ -11,6 +11,21 @@
 (run-shell-command "wmname LG3D")
 (run-shell-command "~/.fehbg")
 
+(setq *colors*
+      '("#181818"
+        "#AE1818"
+        "#18AE18"
+        "#EAEA14"
+        "#1818AE"
+        "#EAAEE9"
+        "#18AEAE"
+        "#EAEAEA"))
+(set-font "-*-ttyp0-medium-*-*-*-12-*-*-*-*-*-*-*")
+(set-fg-color "#181818")
+(set-bg-color "#EAEAEA")
+(set-border-color "#8A8A8A")
+(set-focus-color "#EAEAEA")
+(set-unfocus-color "#181818")
 (set-prefix-key (kbd "C-t"))
 
 
