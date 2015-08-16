@@ -170,6 +170,7 @@
 (define-key *root-map* (kbd "b") "report")
 (define-key *root-map* (kbd "C-/") "pull-from-everywhere")
 (define-key *root-map* (kbd "C-c") "exec emacsclient -c -e '(shell)'")
+(define-key *root-map* (kbd "e")   "exec emacsclient -c")
 (define-key *root-map* (kbd "C-o") "other")
 (define-key *root-map* (kbd "C-r") "remove")
 (define-key *root-map* (kbd "C-s") "hsplit")
