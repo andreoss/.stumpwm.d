@@ -287,6 +287,9 @@
          (window (frame-window (car (last frames)))))
     (shift-windows-forward frames window)))
 
+(define-key *root-map*   (kbd "C-SPC") "rotate-windows")
+(define-key *groups-map* (kbd "/") "grouplist")
+(define-key *groups-map* (kbd "w") "groups")
 
 (define-key *root-map* (kbd "C-SPC") "rotate-windows")
 (define-key *groups-map* (kbd "/") "grouplist")
