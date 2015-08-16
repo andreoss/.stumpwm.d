@@ -259,7 +259,6 @@
     stumpwm:move-window
     stumpwm:move-windows-to-group
     stumpwm:move-window-to-group
-    ;;stumpwm:balance-frames
     stumpwm::delete
     stumpwm::kill
     stumpwm:fullscreen))
