@@ -357,6 +357,77 @@
       (warp-pointer (group-screen (window-group current))
                     (+ (frame-x frame) (/ (frame-width frame) 2))
                     (+ (frame-y frame) (/ (frame-height frame) 2))))))
+(defvar *desktop-history* '())
+
+(defcommand dump () ()
+  "Dump current desktop."
+  (message (format nil "Dumped ~a" (length *desktop-history*)))
+  (let ((current (dump-desktop))
+        (last (first *desktop-history*)))
+    (if (not (equalp current last))
+        (push (dump-desktop) *desktop-history*))))
+
+(defcommand restore () ()
+  "Dump current desktop."
+  (progn
+    (message (format nil "Restored ~a" (length *desktop-history*)))
+    (restore-desktop (pop *desktop-history*))))
+
+(defvar *default-commands*
+  '(stumpwm:only
+    stumpwm:pull-from-windowlist
+    stumpwm:pull-hidden-next
+    stumpwm:pull-hidden-other
+    stumpwm:pull-hidden-previous
+    stumpwm:pull-marked
+    stumpwm:pull-window-by-number
+    stumpwm:next
+    stumpwm:next-in-frame
+    stumpwm:next-urgent
+    stumpwm:prev
+    stumpwm:prev-in-frame
+    stumpwm:select-window
+    stumpwm:select-from-menu
+    stumpwm:select-window-by-name
+    stumpwm:select-window-by-number
+    stumpwm::pull
+    stumpwm::remove
+    stumpwm:iresize
+    stumpwm:vsplit
+    stumpwm:hsplit
+    stumpwm:move-window
+    stumpwm:move-windows-to-group
+    stumpwm:move-window-to-group
+    stumpwm::delete
+    stumpwm::kill
+    stumpwm:fullscreen))
+
+(add-hook *post-command-hook*
+          (lambda (command)
+            (when (member command *default-commands*)
+              (dump))))
+
+(define-key *root-map* (kbd "d") "dump")
+(define-key *root-map* (kbd "u") "restore")
+(define-key *root-map* (kbd "C-g") "only")
+
+(defun shift-windows-forward (frames window)
+  (when frames
+    (let ((frame (car frames)))
+      (shift-windows-forward (cdr frames)
+                             (frame-window frame))
+      (when window
+        (pull-window window frame)))))
+
+(defcommand rotate-windows () ()
+  "Rotate windows"
+  (let* ((frames (group-frames (current-group)))
+         (window (frame-window (car (last frames)))))
+    (shift-windows-forward frames window)))
+
+(define-key *root-map*   (kbd "C-SPC") "rotate-windows")
+(define-key *groups-map* (kbd "/") "grouplist")
+(define-key *groups-map* (kbd "w") "groups")
 
 (add-hook *focus-window-hook* 'focus-window-report)
 (defun shell-command (command)
