@@ -32,7 +32,7 @@
  *float-window-title-height* 1
  *hidden-window-color*                "^(:fg \"#887888\")"
  *input-window-gravity*               :center
- *top-level-error-action*             :abort:
+ *top-level-error-action*             :abort
  *maxsize-border-width*               1
  *message-window-padding*             1
  *mode-line-highlight-template*       "^(:bg \"#9a3232\")^(:fg \"#887888\")~A^n"
