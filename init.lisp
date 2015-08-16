@@ -349,7 +349,6 @@
      (sleep 0.3)
      (echo-windows))))
 
-(add-hook *focus-group-hook* 'focus-group-report)
 
 (defvar *desktop-history* '())
 
