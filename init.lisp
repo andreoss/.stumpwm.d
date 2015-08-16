@@ -349,6 +349,37 @@
      (sleep 0.3)
      (echo-windows))))
 
+(defun group-size (group)
+  "Amount of windows in group."
+  (length  (group-windows group)))
+
+(defun group-resume (group)
+  "Amount of windows in group."
+  (format nil "~{~A~^, ~}" (mapcar #'window-class (group-windows group))))
+
+(push '(#\q group-size) *group-formatters*)
+(push '(#\r group-resume) *group-formatters*)
+
+(setf *group-format*  "^B%n°^b %s %q (%20r)")
+(setf *time-format-string-default* "%a %b %e %Y %l:%M %P")
+(defvar *winner-map* (make-sparse-keymap))
+(define-key *root-map*   (kbd "c") '*winner-map*)
+(define-key *winner-map* (kbd "c") "dump-desktop")
+(define-key *winner-map* (kbd "r") "restore-from-file")
+(define-key *winner-map* (kbd "Left") "winner-undo")
+(define-key *winner-map* (kbd "Right") "winner-redo")
+
+(setf *mouse-focus-policy* :sloppy)
+
+(load-module "urgentwindows")
+(add-hook *urgent-window-hook* 'really-raise-window)
+
+(define-remapped-keys
+    '(
+      ("(Firefox|Chrome)" ("C-a"   . "C-t"))
+      ("(Wfica)"          ("M-ESC" . "M-TAB"))
+      )
+  )
 
 (defvar *desktop-history* '())
 
