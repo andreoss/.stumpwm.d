@@ -1,5 +1,5 @@
 #!/bin/sh
 while :
 do
-   sbcl --load ~/.stumpwm.d/start.lisp
+   sbcl --non-interactive --load ~/.stumpwm.d/start.lisp || xterm
 done
