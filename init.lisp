@@ -429,7 +429,6 @@
 (define-key *groups-map* (kbd "/") "grouplist")
 (define-key *groups-map* (kbd "w") "groups")
 
-(add-hook *focus-window-hook* 'focus-window-report)
 (defun shell-command (command)
   "Run a shell command and display output to screen.
     This must be used in a functional side-effects-free style! If a program does not
