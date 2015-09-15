@@ -373,3 +373,26 @@
 
 (turn-on-mode-line-timer)
 (toggle-modeline)
++(defun run-elisp (code &key (frame t))
++  (shell-exec (format nil "emacsclient ~A -e '~a'" (if frame "-c" "") code)))
++
++(defcommand elisp (command) ((:shell ai/prompt))
++  (run-elisp command))
++
++(defcommand elisp-no-frame (command) ((:shell ai/prompt))
++  (run-elisp command :frame nil))
++
++(defvar *execute-map* (make-sparse-keymap))
++(define-key *root-map*    (kbd "e") '*execute-map*)
++(define-key *execute-map* (kbd "e") "elisp (ibuffer)")
++(define-key *execute-map* (kbd "t") "elisp (vterm)")
++(define-key *execute-map* (kbd "s") "elisp (shell)")
++(define-key *execute-map* (kbd "d") "elisp (dired default-directory)")
++(define-key *execute-map* (kbd "f") "exec firefox -P")
++(define-key *execute-map* (kbd "c") "exec chromium")
++(define-key *top-map* (kbd "XF86AudioRaiseVolume") "raise-volume")
++(define-key *top-map* (kbd "XF86AudioLowerVolume") "lower-volume")
++(defcommand raise-volume () ()
++  (elisp-no-frame "(emms-volume-raise)"))
++(defcommand lower-volume () ()
++  (elisp-no-frame "(emms-volume-lower)"))
