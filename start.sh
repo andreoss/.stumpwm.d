@@ -1,5 +1,5 @@
 #!/bin/sh
 while :
 do
-   sbcl --non-interactive --load ~/.stumpwm.d/start.lisp || xterm
+   $HOME/.stumpwm.d/init.ros || xterm
 done
