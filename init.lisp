@@ -1,6 +1,9 @@
 (require :bt-semaphore)
 (require :external-program)
 (require :swank)
+(require :cl-ppcre)
+(require :local-time)
+(local-time:reread-timezone-repository)
 (in-package :stumpwm)
 (defvar *swank-running* nil)
 (defvar *swank-port* 4005)
@@ -8,44 +11,43 @@
 (defvar *message-semaphore* (bt:make-semaphore :count 1))
 (defvar *winner-map* (make-sparse-keymap))
 (defvar *desktop-history* '())
-(set-font "-*-ttyp0-medium-*-*-*-12-*-*-*-*-*-*-*")
-(set-fg-color "#EAEAEA")
-(set-bg-color "#181818")
+(set-font "-*-clean-*-*-*-*-12-*-*-*-*-*-*-*")
+(set-bg-color "#b9bdc5")
+(set-fg-color "#222222")
 (set-border-color "#8A8A8A")
-(set-unfocus-color "#181818")
+(set-unfocus-color "#b9b8b8")
 (set-focus-color "#1818EA")
 (setq *colors*
-      (list
-        "#181818" "#AE1818"
-        "#18AE18" "#EAEA14"
+      '("#282828" "#AE1818"
+        "#18A038" "#EAEA14"
         "#1818AE" "#EAAEE9"
-        "#18AEAE" "#EAEAEA"))
+        "#58AE0E" "#EAEAEA"))
 (setf *mode-line-background-color* (format nil "#~x" (screen-bg-color (current-screen))))
 (setf *mode-line-border-color*     (format nil "#~x" (screen-border-color (current-screen))))
 (setf *mode-line-border-width* 1)
 (setf *mode-line-foreground-color* (format nil "#~x" (screen-fg-color (current-screen))))
-(setf *mode-line-position* :bottom)
+(setf *mode-line-position* :top)
 (setf *mode-line-timeout* 0.1)
 (set-prefix-key (kbd "C-t"))
 (set-module-dir
  (pathname-as-directory (concat (getenv "HOME") "/.stumpwm.d/modules")))
 (set-transient-gravity :left)
 (setf
- *float-window-border*       1
- *float-window-title-height* 1
- *hidden-window-color*                "^(:fg \"#887888\")"
- *input-window-gravity*               :center
- *maxsize-border-width*               1
- *message-window-gravity*             :center
- *message-window-padding*             1
- *mode-line-highlight-template*       "^(:bg \"#9A3232\")^(:fg \"#887888\")~A^n"
- *mode-line-pad-x*                    20
- *mode-line-pad-y*                    1
- *new-window-preferred-frame*         '(:empty :unfocused :last)
- *normal-border-width*                1
- *top-level-error-action*             :abort
- *transient-border-width*             1
- *window-border-style*                :tight
+ *float-window-border*          1
+ *float-window-title-height*    1
+ *hidden-window-color*          "^(:fg \"#887888\")"
+ *input-window-gravity*         :left
+ *maxsize-border-width*         1
+ *message-window-gravity*       :left
+ *message-window-padding*       1
+ *mode-line-highlight-template* "^(:bg \"#9A3232\")^(:fg \"#887888\")~A^n"
+ *mode-line-pad-x*              20
+ *mode-line-pad-y*              1
+ *new-window-preferred-frame*   '(:empty :unfocused :last)
+ *normal-border-width*          1
+ *top-level-error-action*       :abort
+ *transient-border-width*       1
+ *window-border-style*          :tight
  )
 (setf *group-format*  "^B%n°^b %s %q (%20r)")
 (setf *mouse-focus-policy* :sloppy)
@@ -161,14 +163,25 @@
   "Toggle the swank server on/off. "
   (if *swank-running* (swank-off) (swank-on)))
 
+(defun clock (&key (where "America/New_York"))
+  (let (
+        (now (local-time:now))
+        (timezone (local-time:find-timezone-by-location-name where))
+        )
+    (local-time:format-timestring
+     nil now
+     :timezone timezone
+     :format local-time:+rfc-1123-format+
+     )
+    )
+  )
 (defcommand report () ()
   (message
-   (format nil "~{~A~^| ~}"
-           (list
-            (stumpwm:run-shell-command "uptime | sed 's/.*:[ ]*//'" t)
-            (stumpwm:run-shell-command "TZ=America/New_York date" t)
-            (stumpwm:run-shell-command "TZ=Europe/Moscow date +'                %X %Z'" t)
-            (stumpwm:run-shell-command "acpi" t)))))
+   (format nil "~{~A~^~&~}"
+      (list
+       (clock :where "America/New_York")
+       (clock :where "America/Asuncion")
+       (clock :where "Europe/Moscow")))))
 
 (defcommand toggle-modeline () ()
   "Toggle mode-line. "
@@ -284,9 +297,10 @@
 
 (defcommand shell-exec (command) ((:shell ai/prompt))
   (if (and command (not (equal command "")))
-      (let* ((proc (external-program:start "/bin/sh" (list "-c" command) :output :stream))
+      (let* ((cmd (cl-ppcre:regex-replace-all "{}" command "`xclip -o`"))
+             (proc (external-program:start "/bin/sh" (list "-c" cmd) :output :stream))
              (pid (external-program:process-id proc)))
-        (message (format nil "`~a` started with pid ~a" command (external-program:process-id proc)))
+        (message (format nil "`~a` started with pid ~a" cmd (external-program:process-id proc)))
         (bt:make-thread
          (lambda ()
            (let ((output (external-program:process-output-stream proc)))
@@ -301,7 +315,7 @@
                  (message
                   (format nil
                           "`~a` (~a) finished with ~a~&~{|~A~^~&~}"
-                          command
+                          cmd
                           pid
                           (sb-ext:process-exit-code (sb-ext:process-wait proc))
                           lines
@@ -329,15 +343,15 @@
 (defun fmt-window-status (window)
   (let ((group (window-group window)))
     (cond ((eq window (group-current-window group))
-           #\✓)
+           #\+)
           ((and (typep (second (group-windows group)) 'window)
                 (eq window (second (group-windows group))))
-           #\×)
+           #\-)
           (t #\ ))))
 
 (defun fmt-window-marked (window)
   (if (window-marked window)
-      #\✓
+      #\~
       #\Space))
 
 (defun root-click-handle (screen button x y)
@@ -351,8 +365,7 @@
 
 (define-remapped-keys
     '(("(Firefox|Chrome)" ("C-a"   . "C-t"))
-      ("(Wfica)"          ("M-ESC" . "M-TAB"))
-      ))
+      ("(Wfica)"          ("M-ESC" . "M-TAB"))))
 
 (clear-window-placement-rules)
 (define-frame-preference "2"
@@ -373,26 +386,26 @@
 
 (turn-on-mode-line-timer)
 (toggle-modeline)
-+(defun run-elisp (code &key (frame t))
-+  (shell-exec (format nil "emacsclient ~A -e '~a'" (if frame "-c" "") code)))
-+
-+(defcommand elisp (command) ((:shell ai/prompt))
-+  (run-elisp command))
-+
-+(defcommand elisp-no-frame (command) ((:shell ai/prompt))
-+  (run-elisp command :frame nil))
-+
-+(defvar *execute-map* (make-sparse-keymap))
-+(define-key *root-map*    (kbd "e") '*execute-map*)
-+(define-key *execute-map* (kbd "e") "elisp (ibuffer)")
-+(define-key *execute-map* (kbd "t") "elisp (vterm)")
-+(define-key *execute-map* (kbd "s") "elisp (shell)")
-+(define-key *execute-map* (kbd "d") "elisp (dired default-directory)")
-+(define-key *execute-map* (kbd "f") "exec firefox -P")
-+(define-key *execute-map* (kbd "c") "exec chromium")
-+(define-key *top-map* (kbd "XF86AudioRaiseVolume") "raise-volume")
-+(define-key *top-map* (kbd "XF86AudioLowerVolume") "lower-volume")
-+(defcommand raise-volume () ()
-+  (elisp-no-frame "(emms-volume-raise)"))
-+(defcommand lower-volume () ()
-+  (elisp-no-frame "(emms-volume-lower)"))
+(defun run-elisp (code &key (frame t))
+  (shell-exec (format nil "emacsclient ~A -e '~a'" (if frame "-c" "") code)))
+
+(defcommand elisp (command) ((:shell ai/prompt))
+  (run-elisp command))
+
+(defcommand elisp-no-frame (command) ((:shell ai/prompt))
+  (run-elisp command :frame nil))
+
+(defvar *execute-map* (make-sparse-keymap))
+(define-key *root-map*    (kbd "e") '*execute-map*)
+(define-key *execute-map* (kbd "e") "elisp (ibuffer)")
+(define-key *execute-map* (kbd "t") "elisp (vterm)")
+(define-key *execute-map* (kbd "s") "elisp (shell)")
+(define-key *execute-map* (kbd "d") "elisp (dired default-directory)")
+(define-key *execute-map* (kbd "f") "exec firefox -P")
+(define-key *execute-map* (kbd "c") "exec chromium")
+(define-key *top-map* (kbd "XF86AudioRaiseVolume") "raise-volume")
+(define-key *top-map* (kbd "XF86AudioLowerVolume") "lower-volume")
+(defcommand raise-volume () ()
+  (elisp-no-frame "(emms-volume-raise)"))
+(defcommand lower-volume () ()
+  (elisp-no-frame "(emms-volume-lower)"))

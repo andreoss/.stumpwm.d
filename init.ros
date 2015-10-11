@@ -5,14 +5,10 @@ exec ros -Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  #+quicklisp(ql:quickload '(stumpwm bt-semaphore external-program swank) :silent t)
-  )
-
+  #+quicklisp(ql:quickload '(stumpwm bt-semaphore external-program swank local-time) :silent t))
 (defpackage :ros.script.stumpwm-d/init
   (:use #:cl))
 (in-package :ros.script.stumpwm-d/init)
-
 (defun main (&rest argv)
   (require :stumpwm)
-  (stumpwm:stumpwm)
-  )
+  (stumpwm:stumpwm))
